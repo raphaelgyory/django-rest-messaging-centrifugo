@@ -52,11 +52,10 @@ addons:
 
 before_install:
   - wget https://github.com/centrifugal/centrifugo/releases/download/v1.3.3/centrifugo-1.3.3-linux-amd64.zip
-  - tar -xzvf centrifugo-1.3.3-linux-amd64.zip
-  - sudo mv centrifugo /usr/bin/centrifugo
+  - unzip centrifugo-1.3.3-linux-amd64.zip
+  - sudo mv centrifugo-1.3.3-linux-amd64/centrifugo /usr/bin/centrifugo
 
 install:
-  # Virtualenv < 14 is required to keep the Python 3.2 builds running.
   - pip install tox
 
 script:
