@@ -1,0 +1,161 @@
+<h1>Welcome to djano-rest-messaging-centrifugo tests!</h1>
+<p> You are logged in as {{ user.username }}. We will ensure you can access your messages in real time. </p>
+
+{% csrf_token %}
+
+<div id="AppendDiv"></div>
+
+<script src="//cdn.jsdelivr.net/sockjs/1.0/sockjs.min.js" type="text/javascript"></script>
+<script src="//rawgit.com/centrifugal/centrifuge-js/master/centrifuge.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+<script type="text/javascript">
+
+var centrifuge;
+var channel;
+
+
+function subscribeToChannel(channel){
+
+	/* We check the channel type */
+	if(channel.indexOf("message") > -1) {
+		var subscription = centrifuge.subscribe(channel, function(message) {
+	    	if (message.data) {
+		        $('#AppendDiv').append("<p id='message__" + message.data.id + "'>" + JSON.stringify(message.data) + " on channel '" + channel + "'</p>");
+	    	}
+	    });
+	} else if(channel.indexOf("thread") > -1) {
+		var subscription = centrifuge.subscribe(channel, function(thread) {
+	    	if (thread.data) {
+		        $('#AppendDiv').append("<p id='thread__" + thread.data.message_channel_to_connect_to + "'>" + JSON.stringify(thread.data) + " on channel '" + channel + "'</p>");
+	    	}
+	    });
+	}
+
+    subscription.on('ready', function() {
+        subscription.presence(function(data) {
+        	$('#AppendDiv').append("<p>Centrifugo channel" + channel + "is ready. We are now expecting a message to be pushed from the server.</p>");
+        });
+    });
+
+    subscription.on('join', function(message) {
+        $('#AppendDiv').append("<p>Joined the Centrifugo channel" + channel + "</p>");
+    });
+
+    subscription.on('leave', function(message) {
+    	$('#AppendDiv').append("<p>Leaved the Centrifugo channel" + channel + "</p>");
+    });
+    
+}
+
+function initCentrifuge(url, user, timestamp, token, debug, channels){
+    
+	centrifuge = new Centrifuge({
+        url: url,
+        user: user,
+        timestamp: timestamp,
+        token: token,
+        debug: debug,
+        // authEndpoint: "/messaging/centrifugo/authorization/", // this is our API custom authorization url
+    });
+
+    channels = channels;
+	
+	centrifuge.on('connect', function(){
+		
+		for (var i = 0; i < channels.length; i++) {
+		    subscribeToChannel(channels[i]);
+		}
+	
+	});
+	
+	centrifuge.on('error', function(error_message) {
+		$('#AppendDiv').append("<p>Centrifugo haserror_message " + JSON.stringify(error_message) + ".</p>");
+	});
+
+	centrifuge.on('disconnect', function(e){
+		$('#AppendDiv').append("<p>Centrifugo has disconnected from the channel " + JSON.stringify(channels) + ".</p>");
+	});
+}
+
+
+
+/*
+ * Django csrf handling
+ */
+
+function getCookie(name) {
+	var cookieValue = null;
+	if (document.cookie && document.cookie != '') {
+		var cookies = document.cookie.split(';');
+		for (var i = 0; i < cookies.length; i++) {
+			var cookie = jQuery.trim(cookies[i]);
+			// Does this cookie string begin with the name we want?
+			if (cookie.substring(0, name.length + 1) == (name + '=')) {
+				cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+				break;
+			}
+		}
+	}
+	return cookieValue;
+}
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+	return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+function ajax_request(url, type, data) {
+	// simple ajax request
+	return $.ajax({
+          url: url,
+          type: type,
+          dataType: "json",
+          contentType: "application/json",
+          data: JSON.stringify(data),
+          // The ``X-CSRFToken`` evidently can't be set in the
+          // ``headers`` option, so force it here.
+          beforeSend: function(xhr, settings) {	 
+        	  var csrftoken = getCookie('csrftoken'); 
+        	  if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        		  xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        	  }
+		 }
+	});
+}
+
+/*
+ * We authenticate the user on centrifuge by getting a token
+ */
+
+function getCentrifugeToken(){
+	return ajax_request("/messaging/centrifugo/authentication/", "POST", {})
+}
+
+$(document).ready(function() {
+	$('#AppendDiv').append( "<h2>Step1: Get a centrifuge token.</h2>" );
+	getCentrifugeToken().
+		done(function(json){
+			$('#AppendDiv').append("<p>... done! You have the token " + json.token + ".</p>");
+			// connect to channels
+			$('#AppendDiv').append( "<h2>Step2: Now we will connect the user's channels.</h2>" );
+			// we get the list of the channels we can connect to dinamically in json.channels
+			// we want to ensure the user cannot add a channel he is not connected to
+			var channels = json.channels;
+			var lastThreadId = parseInt(channels[channels.length-1].split(":")[1].split("#")[0]);
+			// we get the forbidden Thread
+			var forbiddenThread = lastThreadId + 1;
+			// we get the ids of the two other users
+			channels.push("messages:" + forbiddenThread + "#2,3"); // + 1 represents the thread we do not have access to
+			channels.push("messages:" + forbiddenThread); // + 1 represents the thread we do not have access to
+			$('#AppendDiv').append( "<p>We will use the followings: <b>url:</b> " + json.connection_url + " ; <b>user (the id of the user in our app):</b> " + json.user + " ; <b>channels:</b> " +  JSON.stringify(json.channels) + " (the last two should not work because they do not involve the current user).</p>" );
+			initCentrifuge(json.connection_url, json.user, json.timestamp, json.token, json.debug, channels);
+			centrifuge.connect();
+		}).
+		fail(function(json){
+			$('#AppendDiv').append("<p>Could not get the token</p>");
+		});
+});
+
+
+</script>

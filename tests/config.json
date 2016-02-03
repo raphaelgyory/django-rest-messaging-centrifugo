@@ -1,0 +1,20 @@
+{
+  "secret": "secret",
+  "anonymous": false,
+  "publish": false,
+  "watch": false,
+  "presence": true,
+  "join_leave": false,
+  "history_size": 0,
+  "history_lifetime": 0,
+  "namespaces": [
+    {
+      "name": "messages",
+      "anonymous": false
+    },
+    {
+      "name": "threads",
+      "anonymous": false
+    }
+  ]
+}

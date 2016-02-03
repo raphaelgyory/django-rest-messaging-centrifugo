@@ -1,0 +1,4 @@
+site_name: django-rest-messaging-centrifugo
+site_description: Real time messaging for Django Rest framework 
+repo_url: https://github.com/raphaelgyory/django-rest-messaging-centrifugo
+site_dir: html
