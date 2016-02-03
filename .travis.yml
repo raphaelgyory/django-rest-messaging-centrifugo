@@ -51,7 +51,7 @@ addons:
       - python3.5
 
 before_install:
-  - ./install-protobuf.sh
+  - ./install-centrifugo.sh
 
 install:
   # Virtualenv < 14 is required to keep the Python 3.2 builds running.
