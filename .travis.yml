@@ -1,6 +1,6 @@
 language: python
 
-sudo: false
+sudo: required
 
 env:
     - TOX_ENV=py27-flake8
@@ -51,6 +51,7 @@ addons:
       - python3.5
 
 before_install:
+  - chmod +x install-centrifugo.sh
   - ./install-centrifugo.sh
 
 install:
