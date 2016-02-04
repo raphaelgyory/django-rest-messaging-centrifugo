@@ -1,62 +1,64 @@
 language: python
-
 sudo: required
-
 env:
-    - TOX_ENV=py27-flake8
-    - TOX_ENV=py35-django19-drf33
-    - TOX_ENV=py35-django18-drf33
-    - TOX_ENV=py35-django18-drf32
-    - TOX_ENV=py35-django18-drf31
-    - TOX_ENV=py35-django18-drf30
-    - TOX_ENV=py34-django19-drf33
-    - TOX_ENV=py34-django18-drf33
-    - TOX_ENV=py34-django18-drf32
-    - TOX_ENV=py34-django18-drf31
-    - TOX_ENV=py34-django18-drf30
-    - TOX_ENV=py34-django17-drf33
-    - TOX_ENV=py34-django17-drf32
-    - TOX_ENV=py34-django17-drf31
-    - TOX_ENV=py34-django17-drf30
-    - TOX_ENV=py34-django17-drf24
-    - TOX_ENV=py33-django18-drf33
-    - TOX_ENV=py33-django18-drf32
-    - TOX_ENV=py33-django18-drf31
-    - TOX_ENV=py33-django18-drf30
-    - TOX_ENV=py33-django17-drf33
-    - TOX_ENV=py33-django17-drf32
-    - TOX_ENV=py33-django17-drf31
-    - TOX_ENV=py33-django17-drf30
-    - TOX_ENV=py33-django17-drf24
-    - TOX_ENV=py27-django19-drf33
-    - TOX_ENV=py27-django18-drf33
-    - TOX_ENV=py27-django18-drf32
-    - TOX_ENV=py27-django18-drf31
-    - TOX_ENV=py27-django18-drf30
-    - TOX_ENV=py27-django17-drf33
-    - TOX_ENV=py27-django17-drf32
-    - TOX_ENV=py27-django17-drf31
-    - TOX_ENV=py27-django17-drf30
-    - TOX_ENV=py27-django17-drf24
-
+- TOX_ENV=py27-flake8
+- TOX_ENV=py35-django19-drf33
+- TOX_ENV=py35-django18-drf33
+- TOX_ENV=py35-django18-drf32
+- TOX_ENV=py35-django18-drf31
+- TOX_ENV=py35-django18-drf30
+- TOX_ENV=py34-django19-drf33
+- TOX_ENV=py34-django18-drf33
+- TOX_ENV=py34-django18-drf32
+- TOX_ENV=py34-django18-drf31
+- TOX_ENV=py34-django18-drf30
+- TOX_ENV=py34-django17-drf33
+- TOX_ENV=py34-django17-drf32
+- TOX_ENV=py34-django17-drf31
+- TOX_ENV=py34-django17-drf30
+- TOX_ENV=py34-django17-drf24
+- TOX_ENV=py33-django18-drf33
+- TOX_ENV=py33-django18-drf32
+- TOX_ENV=py33-django18-drf31
+- TOX_ENV=py33-django18-drf30
+- TOX_ENV=py33-django17-drf33
+- TOX_ENV=py33-django17-drf32
+- TOX_ENV=py33-django17-drf31
+- TOX_ENV=py33-django17-drf30
+- TOX_ENV=py33-django17-drf24
+- TOX_ENV=py27-django19-drf33
+- TOX_ENV=py27-django18-drf33
+- TOX_ENV=py27-django18-drf32
+- TOX_ENV=py27-django18-drf31
+- TOX_ENV=py27-django18-drf30
+- TOX_ENV=py27-django17-drf33
+- TOX_ENV=py27-django17-drf32
+- TOX_ENV=py27-django17-drf31
+- TOX_ENV=py27-django17-drf30
+- TOX_ENV=py27-django17-drf24
 matrix:
   fast_finish: true
-
 addons:
   apt:
     sources:
-      - deadsnakes
+    - deadsnakes
     packages:
-      - python3.5
-
+    - python3.5
 before_install:
-  - wget https://github.com/centrifugal/centrifugo/releases/download/v1.3.3/centrifugo-1.3.3-linux-amd64.zip
-  - unzip centrifugo-1.3.3-linux-amd64.zip
-  - sudo mv centrifugo-1.3.3-linux-amd64/centrifugo /usr/bin/centrifugo
-
+- wget https://github.com/centrifugal/centrifugo/releases/download/v1.3.3/centrifugo-1.3.3-linux-amd64.zip
+- unzip centrifugo-1.3.3-linux-amd64.zip
+- sudo mv centrifugo-1.3.3-linux-amd64/centrifugo /usr/bin/centrifugo
 install:
-  - pip install tox
-
+- pip install tox
 script:
-  - tox -e $TOX_ENV
-
+- tox -e $TOX_ENV
+deploy:
+  provider: pypi
+  user: RaphaelGyory
+  password:
+    secure: fjlQHGhgD16+g88HlTSS+NrrejL2uJC73VZcM1Ia8I1wqGmVX17BMb/y+wUY7Q+kcAEKx3EyOUYWS3S+fZzfxgATUBvTqtqY2+HZWhQ1Wutw9QXOYVVVLk8b0zjAJZVCKqMePK9GxNBR5OHumrf2c0VCbjwcxCiFILUtusChELRloQruQJ6ZJ00AzIgp6KB4/9DMfl9zoFaoGvP3yXTFW8t9Qj2gw/f1Bi2aU71t1QrQJpAgJE0kpUBIIkB/5JAGbIiZ8zrZbArh3Msy0UvW7IlMAipjCxXS0fEYWXjkKPeEwVb0CVCvh1K7USUeWs+UIxsWRadEOk3v82DspwBEatup/VjmW88vzsEE2h6TrokGnlNftwhq7TYHpWVlSuVzLZFlcAI+yZ1BMWvEBsi4D1nfLtwU9j0DN8gQsTWHbvgRpA8JeljQx11XeIeidnTTF7aIrRMbY/0ZykaYTLCuXXHcfvdmhGeLRhPNT+AuwH+xmQwVM5t3dm/22P7uPAzSMJ7Hk6XhLDTAwDbKXeie+4LvAsmHYTPF+sdtFZTnDEt7J6RvrcqgAlT8Ua3oQnpn4nCeGkZVnqGGPcfd6Mk+qhThGFCA0hKj2gtlUy5DnWTDMepL4UpiRn4YCFVbOAgh8O64ZzQatBxux434iN59aylbtgbxDQqE3VCABBEnoZk=
+  on:
+    tags: true
+    branch: master
+    distributions: sdist bdist_wheel
+    repo: raphaelgyory/django-rest-messaging-centrifugo
