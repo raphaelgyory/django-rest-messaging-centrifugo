@@ -1,7 +1,7 @@
 django-rest-messaging-centrifugo
 ======================================
 
-|build-status-image| |pypi-version|
+|build-status-image| |pypi-version| |coverage-status-image|
 
 Overview
 --------
@@ -80,3 +80,5 @@ To build the documentation:
    :target: http://travis-ci.org/raphaelgyory/django-rest-messaging-centrifugo?branch=master
 .. |pypi-version| image:: https://img.shields.io/pypi/v/django-rest-messaging-centrifugo.svg
    :target: https://pypi.python.org/pypi/django-rest-messaging-centrifugo
+.. |coverage-status-image| image:: https://coveralls.io/repos/github/raphaelgyory/django-rest-messaging-centrifugo/badge.svg?branch=master 
+   :target: https://coveralls.io/github/raphaelgyory/django-rest-messaging-centrifugo?branch=master
