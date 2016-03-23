@@ -39,7 +39,6 @@ class CentrifugoAuthentication(View):
         channels = []
         for thread in Thread.managers.get_threads_where_participant_is_active(participant_id=participant.id):
             channels.append(
-                # "{0}{1}".format(settings.CENTRIFUGO_MESSAGE_NAMESPACE, thread.id)
                 build_channel(settings.CENTRIFUGO_MESSAGE_NAMESPACE, thread.id, thread.participants.all())
             )
 

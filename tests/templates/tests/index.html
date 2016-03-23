@@ -139,7 +139,7 @@ $(document).ready(function() {
 			$('#AppendDiv').append("<p>... done! You have the token " + json.token + ".</p>");
 			// connect to channels
 			$('#AppendDiv').append( "<h2>Step2: Now we will connect the user's channels.</h2>" );
-			// we get the list of the channels we can connect to dinamically in json.channels
+			// we get the list of the channels we can connect to dynamically in json.channels
 			// we want to ensure the user cannot add a channel he is not connected to
 			var channels = json.channels;
 			var lastThreadId = parseInt(channels[channels.length-1].split(":")[1].split("#")[0]);

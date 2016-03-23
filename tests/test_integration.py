@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.staticfiles.testing import LiveServerTestCase
 from django.core.urlresolvers import reverse
+from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from selenium.webdriver.firefox.webdriver import WebDriver
 
@@ -63,20 +64,14 @@ class IntegrationTests(LiveServerTestCase):
         # we launch centrifugo
         cls.centrifugo = subprocess.Popen(["centrifugo --config=tests/config.json --port={0}".format(getattr(settings, "CENTRIFUGO_PORT", 8802))], stdout=subprocess.PIPE,
                                           shell=True, preexec_fn=os.setsid)
-        # we create a thread
+        # we create participants
         cls.participant1 = Participant.objects.create(id=cls.user.id)
         cls.participant2 = Participant.objects.create(id=2)
         cls.participant3 = Participant.objects.create(id=3)
-        # we create threads
-        cls.thread1 = Thread.objects.create(name="The #1 Thread")
-        cls.participation11 = Participation.objects.create(participant=cls.participant1, thread=cls.thread1)
-        cls.participation12 = Participation.objects.create(participant=cls.participant2, thread=cls.thread1)
-        cls.thread2 = Thread.objects.create(name="The #2 Thread")
-        cls.participation21 = Participation.objects.create(participant=cls.participant1, thread=cls.thread2)
-        cls.participation22 = Participation.objects.create(participant=cls.participant3, thread=cls.thread2)
-        cls.thread_unrelated = Thread.objects.create(name="The unrelated Thread")  # the conversation does not involve the current user, we do not want it on the screen!
-        cls.participationU1 = Participation.objects.create(participant=cls.participant2, thread=cls.thread_unrelated)
-        cls.participationU2 = Participation.objects.create(participant=cls.participant3, thread=cls.thread_unrelated)
+        cls.participant4 = Participant.objects.create(id=4)
+        # we create a fake request
+        cls.request = RequestFactory()
+        cls.request.rest_messaging_participant = cls.participant1
         # and wait for it to run
         time.sleep(4)
 
@@ -95,6 +90,13 @@ class IntegrationTests(LiveServerTestCase):
         self.selenium.get(self.live_server_url + reverse('dummy'))
         self.selenium.add_cookie(self.cookie)
         self.selenium.refresh()
+        # we create threads which call signals telling centrifugo to connect
+        self.thread1 = Thread.managers.get_or_create_thread(self.request, "The #1 Thread", self.participant1.id, self.participant2.id)
+        self.thread2 = Thread.managers.get_or_create_thread(self.request, "The #2 Thread", self.participant1.id, self.participant3.id)
+        # the following conversation does not include the current user, we do not want it on the screen!
+        self.thread_unrelated = Thread.objects.create(name="The unrelated Thread")  # the conversation does not involve the current user, we do not want it on the screen!
+        self.participationU1 = Participation.objects.create(participant=self.participant2, thread=self.thread_unrelated)
+        self.participationU2 = Participation.objects.create(participant=self.participant3, thread=self.thread_unrelated)
         # we load the index page which contains the logic (in javascript)
         self.selenium.get(self.live_server_url + reverse('index'))
         # we wait a little bit
@@ -113,7 +115,6 @@ class IntegrationTests(LiveServerTestCase):
         m22 = Message.objects.create(sender=self.participant1, thread=self.thread2, body=body22)
         mU1 = Message.objects.create(sender=self.participant2, thread=self.thread_unrelated, body=bodyU1)
         mU2 = Message.objects.create(sender=self.participant3, thread=self.thread_unrelated, body=bodyU2)
-        self.participation11.save()  # to trigger the signal
         # the channels are private
         # this means that Centrifugo will check the users ids to know if the user may connect
         # if we query a private channel the user does not belong to, we never see the message
@@ -134,10 +135,13 @@ class IntegrationTests(LiveServerTestCase):
         self.assertTrue(body12 in m12.text)
         self.assertTrue(body21 in m21.text)
         self.assertTrue(body22 in m22.text)
-        # and the list of connected threads too
-        message_channel_to_connect_to = 'messages:{0}#{1},{2}'.format(self.participation11.thread.id, self.participation11.thread.participants.all()[0].id, self.participation11.thread.participants.all()[1].id)
+        # the following ensures we get the new threads created during the connection
+        self.thread4 = Thread.managers.get_or_create_thread(self.request, "The #4 Thread", self.participant4.id, self.participant1.id)
+        time.sleep(4)
+        message_channel_to_connect_to = 'messages:4#4,1'.format(self.thread4.id, self.thread4.participants.all()[0].id, self.thread4.participants.all()[1].id)
         thread_messages = self.selenium.find_element_by_id('thread__{0}'.format(message_channel_to_connect_to))
         self.assertTrue(message_channel_to_connect_to in thread_messages.text)
+        # we should not find the unrelated messages
         self.assertRaises(Exception, self.selenium.find_element_by_id, 'message__{0}'.format(mU1.id))
         self.assertRaises(Exception, self.selenium.find_element_by_id, 'message__{0}'.format(mU2.id))
         self.assertRaises(Exception, self.selenium.find_element_by_id, 'message__{0}'.format(mU2.id))
